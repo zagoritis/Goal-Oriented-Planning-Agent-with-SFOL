@@ -7,6 +7,6 @@
 #Add your percept rules below:
 
 at(X) & passage(Y) > +link(X_Y)
-at(X) & locked(K) > +door(X)
-at(X) & key(K) > +key_location(X)   ???
-at(X) > +at(X)
+at(X) & locked(Y) > +locked_door(Y)
+at(X) & key(Y) > +key_location(X)
+at(X) > +agent_location(X)
