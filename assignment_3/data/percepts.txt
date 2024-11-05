@@ -6,6 +6,7 @@
 #Such rules typically add or delete beliefs, this is done with + and - operators.
 #Add your percept rules below:
 
+<<<<<<< HEAD
 at(X) & passage(Y) > +link(X,Y)
 at(X) & locked(K) > +currPosLocked(X,K)
 at(X) & key(K) > +currPosKey(X,K)
