@@ -32,7 +32,7 @@ public class MyAgent extends Agent {
 		//It returns true if at least one substitution is found (can be the empty substitution, if nothing needs to be substituted to unify the conditions with the facts)
 		//allSubstitutions is a list of all substitutions that are found, which was passed by reference (so you use it build the list of substitutions)
 		//substitution is the one we are currently building recursively.
-		//conditions is the list of conditions you  still need to find a subst for (this list shrinks the further you get in the recursion).
+		//conditions is the list of conditions you still need to find a substitution for (this list shrinks the further you get in the recursion).
 		//facts is the list of predicates you need to match against (find substitutions so that a predicate form the conditions unifies with a fact)
 
 		return false;
@@ -42,10 +42,10 @@ public class MyAgent extends Agent {
 	public HashMap<String, String> unifiesWith(Predicate p, Predicate f) {
 		//Returns the valid substitution for which p predicate unifies with f
 		//You may assume that Predicate f is fully bound (i.e., it has no variables anymore)
-		//The result can be an empty substitution, if no subst is needed to unify p with f (e.g., if p an f contain the same constants or do not have any terms)
+		//The result can be an empty substitution, if no substitution is needed to unify p with f (e.g., if p an f contain the same constants or do not have any terms)
 		//Please note because f is bound and p potentially contains the variables, unifiesWith is NOT symmetrical
 		//So: unifiesWith("human(X)","human(joost)") returns X=joost, while unifiesWith("human(joost)","human(X)") returns null 
-		//If no subst is found it returns null
+		//If no substitution is found it returns null
 		return null;
 	}
 
