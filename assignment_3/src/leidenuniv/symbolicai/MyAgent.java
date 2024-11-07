@@ -46,6 +46,18 @@ public class MyAgent extends Agent {
 		//Please note because f is bound and p potentially contains the variables, unifiesWith is NOT symmetrical
 		//So: unifiesWith("human(X)","human(joost)") returns X=joost, while unifiesWith("human(joost)","human(X)") returns null 
 		//If no substitution is found it returns null
+		
+		HashMap<String, String> result = new HashMap<String, String>();
+		if(p.getTerms().size() == f.getTerms().size() && p.getName().compareTo(f.getName())==0 && p.getTerms().size() != 0) {
+			for(int i=0;i < p.getTerms().size();i++) {
+				if(p.getTerm(i).var && !f.getTerm(i).var)
+					result.put(p.getTerm(i).toString(), f.getTerm(i).toString());
+				if(!p.getTerm(i).var && !f.getTerm(i).var && p.getTerm(i).toString().compareTo(f.getTerm(i).toString())!=0)
+					return null;
+			}
+			return result;
+		}
+		
 		return null;
 	}
 
@@ -54,7 +66,23 @@ public class MyAgent extends Agent {
 		// Substitutes all variable terms in predicate <old> for values in substitution <s>
 		//(only if a key is present in s matching the variable name of course)
 		//Use Term.substitute(s)
-		return null;
+		Vector<Term> old_terms = old.getTerms();
+		String substituted_string = old.getName() + "(";
+		for(Term x: old_terms) {
+			x.substitute(s);
+			substituted_string += x + ",";
+		}
+		substituted_string = substituted_string.substring(0, substituted_string.length() - 1) + ")";
+		Predicate substituted_pred = new Predicate(substituted_string);
+		substituted_pred.not = old.not;
+		substituted_pred.eql = old.eql;
+		substituted_pred.add = old.add;
+		substituted_pred.del = old.del;
+		substituted_pred.act = old.act;
+		substituted_pred.adopt = old.adopt;
+		substituted_pred.drop = old.drop;
+		substituted_pred.neg = old.neg;
+		return substituted_pred;
 	}
 
 	@Override
