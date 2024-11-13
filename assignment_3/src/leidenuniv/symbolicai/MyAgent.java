@@ -35,6 +35,41 @@ public class MyAgent extends Agent {
 		//conditions is the list of conditions you still need to find a substitution for (this list shrinks the further you get in the recursion).
 		//facts is the list of predicates you need to match against (find substitutions so that a predicate form the conditions unifies with a fact)
 
+		if (conditions.isEmpty()) {
+			if(substitution.size() >= 1) {
+				
+				return true;
+			}
+			return false;
+		}
+		Predicate condition = conditions.remove(0);
+		for(String key_fact: facts.keySet()) {
+			Predicate fact = facts.get(key_fact);
+			HashMap<String, String> temp = unifiesWith(condition, fact);
+			//Checks if negation is in the conditions then go and find every possible substitution and then remove if not good
+			if (temp != null) {
+				for (String key: temp.keySet()) {
+					if (!substitution.containsKey(key)) {
+						substitution.put(key, temp.get(key));
+					}
+					else {
+						if (substitution.get(key).compareTo(temp.get(key))!=0)
+							return false;
+					}
+				}
+				if(findAllSubstitutions(allSubstitutions, substitution, conditions, facts)) {
+					allSubstitutions.add(new HashMap<>(substitution));
+					
+				}
+				for (String key : temp.keySet()) {
+	                substitution.remove(key);
+	            }
+			}			
+			
+		}
+		System.out.println(allSubstitutions);
+		
+		
 		return false;
 	}
 
