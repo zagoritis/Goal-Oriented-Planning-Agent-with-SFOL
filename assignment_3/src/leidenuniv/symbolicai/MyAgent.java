@@ -2,6 +2,7 @@ package leidenuniv.symbolicai;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.Vector;
 
 import leidenuniv.symbolicai.logic.KB;
@@ -11,8 +12,6 @@ import leidenuniv.symbolicai.logic.Term;
 
 public class MyAgent extends Agent {
 	
-	
-
 	@Override
 	public KB forwardChain(KB kb) {
 		//This method should perform a forward chaining on the kb given as argument, until no new facts are added to the KB.
@@ -23,7 +22,7 @@ public class MyAgent extends Agent {
 		
 		return null;
 	}
-
+	
 	@Override
 	public boolean findAllSubstitutions(Collection<HashMap<String, String>> allSubstitutions,
 			HashMap<String, String> substitution, Vector<Predicate> conditions, HashMap<String, Predicate> facts) {
@@ -36,41 +35,59 @@ public class MyAgent extends Agent {
 		//facts is the list of predicates you need to match against (find substitutions so that a predicate form the conditions unifies with a fact)
 
 		if (conditions.isEmpty()) {
-			if(substitution.size() >= 1) {
-				
-				return true;
-			}
-			return false;
+			allSubstitutions.add(new HashMap<>(substitution));
+			return true;
 		}
+
+		boolean foundSubstitution = false;
 		Predicate condition = conditions.remove(0);
-		for(String key_fact: facts.keySet()) {
-			Predicate fact = facts.get(key_fact);
-			HashMap<String, String> temp = unifiesWith(condition, fact);
-			//Checks if negation is in the conditions then go and find every possible substitution and then remove if not good
-			if (temp != null) {
-				for (String key: temp.keySet()) {
-					if (!substitution.containsKey(key)) {
-						substitution.put(key, temp.get(key));
-					}
-					else {
-						if (substitution.get(key).compareTo(temp.get(key))!=0)
-							return false;
-					}
-				}
-				if(findAllSubstitutions(allSubstitutions, substitution, conditions, facts)) {
-					allSubstitutions.add(new HashMap<>(substitution));
-					
-				}
-				for (String key : temp.keySet()) {
-	                substitution.remove(key);
-	            }
-			}			
-			
+
+		if(condition.not || condition.eql) {
+			if(!conditions.isEmpty()) {
+				conditions.add(condition);
+				foundSubstitution = findAllSubstitutions(allSubstitutions, substitution, conditions, facts);
+			}
+			else {
+				String substituted_term1 = condition.getTerm(0).toString();
+				substituted_term1 = substitution.containsKey(substituted_term1) ? substitution.get(substituted_term1) : substituted_term1;
+
+				String substituted_term2 = condition.getTerm(1).toString();
+				substituted_term2 = substitution.containsKey(substituted_term2) ? substitution.get(substituted_term2) : substituted_term2;
+
+				if(!((condition.not && substituted_term1.equals(substituted_term2)) || (condition.eql && !substituted_term1.equals(substituted_term2))))
+					foundSubstitution = findAllSubstitutions(allSubstitutions, substitution, conditions, facts);
+				conditions.insertElementAt(condition, 0);
+			}
 		}
-		System.out.println(allSubstitutions);
+		else {
+			for(Predicate fact: facts.values()) {
+				HashMap<String, String> unifications = unifiesWith(condition, fact);
+				if (unifications != null) {
+					Set<String> temp = new HashMap<String,String>(substitution).keySet();
+					for (String term: unifications.keySet()) {
+						if (!substitution.containsKey(term))
+							substitution.put(term, unifications.get(term));
+						else if (!substitution.get(term).equals(unifications.get(term))) {
+							for (String terminate_term : unifications.keySet())
+								if (!temp.contains(terminate_term))
+									substitution.remove(terminate_term);
+							conditions.insertElementAt(condition, 0);
+							return false;
+						}
+					}
+					if(findAllSubstitutions(allSubstitutions, substitution, conditions, facts))
+						foundSubstitution = true;
+					for (String terminate_term : unifications.keySet())
+						if (!temp.contains(terminate_term))
+		                	substitution.remove(terminate_term);
+				}			
+				
+			}
+			conditions.insertElementAt(condition, 0);
+		}
+		System.out.println("\n"+allSubstitutions);
 		
-		
-		return false;
+		return foundSubstitution;
 	}
 
 	@Override
