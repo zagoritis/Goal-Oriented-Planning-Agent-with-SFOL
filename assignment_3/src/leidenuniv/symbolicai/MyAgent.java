@@ -38,12 +38,12 @@ public class MyAgent extends Agent {
                         conclusion = substitute(conclusion, substitution);
                         knowledgeBase.add(new Sentence(conclusion.toString()));
                         facts.put(conclusion.toString(), conclusion);
-                        System.out.println(substitution.toString());
+                        //System.out.println(substitution.toString());
                     }
                 }
             }
         }
-        System.out.println("\n"+knowledgeBase.rules());
+        //System.out.println("\n"+knowledgeBase.rules());
         return knowledgeBase;
     }
 
@@ -58,78 +58,99 @@ public class MyAgent extends Agent {
         //conditions is the list of conditions you still need to find a substitution for (this list shrinks the further you get in the recursion).
         //facts is the list of predicates you need to match against (find substitutions so that a predicate form the conditions unifies with a fact)
 
+        // Base case - we add substitution if condition are empty (and we did not get any false before)
         if (conditions.isEmpty()) {
             allSubstitutions.add(new HashMap<>(substitution));
             return true;
         }
 
         boolean foundSubstitution = false;
+        // Take the condition to evaluate in currect recursion step
         Predicate condition = conditions.remove(0);
 
-		if(condition.neg) {
-            if (!conditions.isEmpty()) {
-                conditions.add(condition);
-                foundSubstitution = findAllSubstitutions(allSubstitutions, substitution, conditions, facts);
-            }
-            else {
-                for (Predicate fact : facts.values()) {
-                    for (Term t : condition.getTerms()){
-                        if (unifiesWith(condition, fact) != null && substitution.containsKey(t.toString()) && fact.getTerm(0).toString().equals(substitution.get(t.toString()))) {
-                            foundSubstitution = !findAllSubstitutions(allSubstitutions, substitution, conditions, facts);
+        //Case to check if it is negation/inequality/equality and if there are still more predicates and add it to the end
+        if ((condition.neg || condition.not || condition.eql) && !conditions.isEmpty()) {
+            conditions.add(condition);
+            foundSubstitution = findAllSubstitutions(allSubstitutions, substitution, conditions, facts);
+        }
+        //After evaluating every predicate, evaluate its negation (Case where the predicate is a negation in the end)
+		else if(condition.neg) {
+            //Check if the fact unifies with the condition
+            for (Predicate fact : facts.values()) {
+                if (unifiesWith(condition, fact) != null) {
+                    int i=0;
+                    // For every term in condition and fact check if the substitution contain this variable(from condition)
+                    // in substitution and if the values (from substitution and fact) are not the same
+                    for (Term t : condition.getTerms()) {
+                        //System.out.println(t.toString() + " " + fact.getTerm(0).toString() + " " + substitution.get(t.toString()));
+                        if (substitution.containsKey(t.toString()) && !fact.getTerm(i).toString().equals(substitution.get(t.toString()))) {
+                            foundSubstitution = findAllSubstitutions(allSubstitutions, substitution, conditions, facts);
                             conditions.insertElementAt(condition, 0);
                         }
+                        i++;
                     }
-
                 }
             }
 	    }
-
+        //After evaluating every predicate, evaluate its equality or inequality (Case where the predicate is an equality/inequality in the end)
         else if (condition.not || condition.eql) {
-            if (!conditions.isEmpty()) {
-                conditions.add(condition);
+            //Get substitution from substitution variable for every variable in the equality/inequality predicate
+            String substituted_term1 = condition.getTerm(0).toString();
+            substituted_term1 = substitution.containsKey(substituted_term1) ? substitution.get(substituted_term1) : substituted_term1;
+
+            String substituted_term2 = condition.getTerm(1).toString();
+            substituted_term2 = substitution.containsKey(substituted_term2) ? substitution.get(substituted_term2) : substituted_term2;
+
+            //If the inequality/equality does not suit given substitutions return false (otherwise if they are equal/not equal go to the next recursion)
+            if (!((condition.not && substituted_term1.equals(substituted_term2)) || (condition.eql && !substituted_term1.equals(substituted_term2))))
                 foundSubstitution = findAllSubstitutions(allSubstitutions, substitution, conditions, facts);
-            } else {
-                String substituted_term1 = condition.getTerm(0).toString();
-                substituted_term1 = substitution.containsKey(substituted_term1) ? substitution.get(substituted_term1) : substituted_term1;
-
-                String substituted_term2 = condition.getTerm(1).toString();
-                substituted_term2 = substitution.containsKey(substituted_term2) ? substitution.get(substituted_term2) : substituted_term2;
-
-                if (!((condition.not && substituted_term1.equals(substituted_term2)) || (condition.eql && !substituted_term1.equals(substituted_term2))))
-                    foundSubstitution = findAllSubstitutions(allSubstitutions, substitution, conditions, facts);
-                conditions.insertElementAt(condition, 0);
-            }
+            conditions.insertElementAt(condition, 0);
         }
 		else {
+            //Case where there are normal predicates
             for (Predicate fact : facts.values()) {
+                //For every fact check if there is unification with current condition
                 HashMap<String, String> unifications = unifiesWith(condition, fact);
 
                 if (unifications != null) {
+                    //Get the terms we had from previous recursion
                     Set<String> temp = new HashMap<String, String>(substitution).keySet();
 
+
                     for (String term : unifications.keySet()) {
+                        // Check if substitution already have the key
                         if (!substitution.containsKey(term))
+                            // If not put it into substitution
                             substitution.put(term, unifications.get(term));
+                        // Check if the predicate for the same variable have the same values in substitution human(Z,X) human(Z,Y)
                         else if (!substitution.get(term).equals(unifications.get(term))) {
+                            // Remove substitutions that were added in this recursion
+                            // We read Y = joost and in the current recursion Z=kacper, but we do not need Z after recursion (It should not happen)
                             for (String terminate_term : unifications.keySet())
                                 if (!temp.contains(terminate_term))
                                     substitution.remove(terminate_term);
+                            //Put current condition again into conditions list
                             conditions.insertElementAt(condition, 0);
+                            //check if the substitution was found already
                             if (allSubstitutions.isEmpty())
                                 return false;
                             return true;
                         }
                     }
+                    //Next step in recursion (If we find substitution, we return true
                     if (findAllSubstitutions(allSubstitutions, substitution, conditions, facts))
                         foundSubstitution = true;
+                    // Remove substitutions that were added in this recursion
                     for (String terminate_term : unifications.keySet())
                         if (!temp.contains(terminate_term))
                             substitution.remove(terminate_term);
                 }
             }
+            //Put current condition again into conditions list
             conditions.insertElementAt(condition, 0);
         }
         //System.out.println("\n"+allSubstitutions);
+        // Return whether any substitutions were successfully found
         return foundSubstitution;
     }
 
