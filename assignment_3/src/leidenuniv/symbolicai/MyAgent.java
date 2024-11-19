@@ -1,10 +1,12 @@
 package leidenuniv.symbolicai;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.Vector;
 
+import leidenuniv.symbolicai.environment.Maze;
 import leidenuniv.symbolicai.logic.KB;
 import leidenuniv.symbolicai.logic.Predicate;
 import leidenuniv.symbolicai.logic.Sentence;
@@ -22,15 +24,20 @@ public class MyAgent extends Agent {
 
 		KB knowledgeBase = new KB();
 		HashMap<String, Predicate> facts = new HashMap<>();
-
-		for (Sentence s : kb.rules()) {
+	
+		for(Sentence s : kb.rules()) {
 			Vector<Predicate> conditions = s.conditions;
 			Vector<Predicate> conclusions = s.conclusions;
 			if (conditions.isEmpty()) {
 				knowledgeBase.add(s);
 				facts.put(conclusions.get(0).toString(), conclusions.get(0));
-				continue;
 			}
+		}
+		for (Sentence s : kb.rules()) {
+			Vector<Predicate> conditions = s.conditions;
+			Vector<Predicate> conclusions = s.conclusions;
+			if (conditions.isEmpty())
+				continue;
 			Collection<HashMap<String, String>> substitutions = new Vector<HashMap<String, String>>();
 			if (findAllSubstitutions(substitutions, new HashMap<String, String>(), s.conditions, facts)) {
 				for (HashMap<String, String> substitution : substitutions) {
@@ -79,8 +86,8 @@ public class MyAgent extends Agent {
 					int i = 0;
 					// Iterate each term in condition and fact (with variable i)
 					for (Term term : condition.getTerms()) {
-						// Check if the substitution contains this variable (from condition) and if the values (from substitution and fact) are not the same
-						if (substitution.containsKey(term.toString()) && !fact.getTerm(i).toString().equals(substitution.get(term.toString()))) {
+						// Check if the values (from substitution and fact) are not the same
+						if (!fact.getTerm(i).toString().equals(substitution.get(term.toString()))) {
 							foundSubstitution = findAllSubstitutions(allSubstitutions, substitution, conditions, facts);
 							conditions.add(0, condition);
 						}
@@ -116,7 +123,7 @@ public class MyAgent extends Agent {
 					// Iterate each term in the unification to ensure no conflicts with the current substitution
 					for (String term : unifications.keySet()) {
 						// If the current term already exists in the current substitution but with a different value then it is incorrect
-						if (substitution.containsKey(term) && !curr_substitution.get(term).equals(unifications.get(term))) {
+						if (curr_substitution.containsKey(term) && !curr_substitution.get(term).equals(unifications.get(term))) {
 							incorrect = true;
 							break;
 						}
@@ -161,8 +168,8 @@ public class MyAgent extends Agent {
 				if (!pTerm.toString().equals(fTerm.toString()))
 					return null;
 			}
-			// Check if the current term is a variable to find a unification
-			else if (result.containsKey(pTerm.toString()) && !result.get(pTerm.toString()).equals(fTerm.toString()))
+			// Check if both are terms and they are different or both are variables and return null
+			else if (result.containsKey(pTerm.toString()) && !result.get(pTerm.toString()).equals(fTerm.toString()) || pTerm.var && fTerm.var)
 				return null;
 			// If every case that does not unify then add it
 			else
@@ -190,6 +197,12 @@ public class MyAgent extends Agent {
         //Ends at maxDepth
         //Predicate goal is the goal predicate to find a plan for.
         //Return null if no plan is found.
+    	
+    	for(int depth = 1; depth <= maxDepth; depth++) {
+    		Plan result = depthFirst(depth, 0, kb, goal, new Plan());
+    		if(result != null)
+    			return result;
+    	}
         return null;
     }
 
@@ -201,6 +214,36 @@ public class MyAgent extends Agent {
         //Returns (bubbles back through recursion) the plan when the state entails the goal predicate
         //Returns null if capped or if there are no (more) actions to perform in one node (state)
         //HINT: make use of think() and act() using the local state for the node in the search you are in.
-        return null;
+    	
+		Maze w = new Maze(new File("data/prison.txt"));
+    	
+		if(depth == maxDepth) {
+    		if(state.contains(goal))
+    			return partialPlan;
+    		return null;
+    	}
+		
+		//state=belief
+		
+		think(state, null, intentions);
+		
+		for (Sentence intention : intentions.rules()) {
+			
+			KB curr_state = new KB();
+			for (Sentence s : state.rules())
+				curr_state.add(s);
+			
+			act(w, intention.conclusions.get(0), curr_state, desires);
+			
+			partialPlan.add(intention);
+			
+			Plan finalPlan = depthFirst(maxDepth, depth + 1, curr_state, goal, partialPlan);
+				
+			if (finalPlan != null)
+				return finalPlan;
+			
+			partialPlan.remove(intention);
+		}
+		return null;
     }
 }

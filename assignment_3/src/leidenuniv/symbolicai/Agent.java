@@ -63,7 +63,7 @@ public abstract class Agent {
 		//You process this list using Agent.processFacts(b,d,i). with b d i the KB's to update.
 		//IMPORTANT: b d and i are changed as they are passed by reference.
 		//IMPORTANT: the reason think has b d and i as parameters is so that you can make clever use of think() when you implement planning later.
-		KB facts=forwardChain(programRules.union(b)); 
+		KB facts=forwardChain(programRules.union(b));
 		if (DEBUG) System.out.println("THINK INFERENCE:\n"+facts);//uncomment this if you want to know what facts your forward chaining inference produces
 		processFacts(facts, b, d, i);
 	}

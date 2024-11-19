@@ -11,3 +11,7 @@
 pos(X) & currPosLocked(X,K) & haveKey(K) > _open(X,K)
 pos(X) & currPosKey(X,K) > _grab(X,K)
 pos(X) & link(X,Y) > _goto(X,Y)
+
+pos(X) & currPosLocked(X,K) > *haveKey(K)
+haveKey(K) > *unlockDoor(K)
+pos(X) & !exit > *escape
