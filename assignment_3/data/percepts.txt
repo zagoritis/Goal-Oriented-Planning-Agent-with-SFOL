@@ -9,6 +9,4 @@
 at(X) & passage(Y) > +link(X,Y)
 at(X) & locked(K) > +currPosLocked(X,K)
 at(X) & key(K) > +currPosKey(X,K)
-at(X) > +pos(X)
-
-at(X) & exit > +escape
+at(X) > +pos(X) & +visited(X)
