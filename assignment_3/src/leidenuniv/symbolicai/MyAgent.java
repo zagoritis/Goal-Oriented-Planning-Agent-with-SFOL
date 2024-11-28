@@ -40,7 +40,6 @@ public class MyAgent extends Agent {
 			if (findAllSubstitutions(substitutions, new HashMap<String, String>(), s.conditions, facts)) {
 				for (HashMap<String, String> substitution : substitutions) {
 					for (Predicate conclusion : conclusions) {
-						//If con is adopt and is in kb.rules/fact
 						conclusion = substitute(conclusion, substitution);
 						if (kb.contains(new Sentence(conclusion.toString())) && conclusion.adopt)
 							continue;
@@ -91,9 +90,8 @@ public class MyAgent extends Agent {
 		if (condition.neg) {
 			Predicate temp = new Predicate(condition.toString().substring(1));;
 			temp = substitute(temp, substitution);
-			if (facts.containsKey(temp.toString())) {
+			if (facts.containsKey(temp.toString()))
 				return false;
-			}
 			else
 				foundSubstitution = findAllSubstitutions(allSubstitutions, substitution, curr_conditions, facts);
 		}
