@@ -36,6 +36,5 @@ The agent operates in a maze containing walls, keys, doors, and an exit. Its goa
 - **Kacper Nizielski**
 
 ## References
-- Course materials from Leiden University.
 - Eclipse IDE [Setup Guide](https://www.eclipse.org/downloads/).
-
+- Joost Broekens, Symbolic AI Course, Leiden University
