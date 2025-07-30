@@ -1,4 +1,4 @@
-# Goal-Oriented-Planning-Agent-with-SFOL  
+# Goal Oriented Planning Agent with SFOL  
 **Assignment Year: 2024-2025**
 
 This project focuses on building a goal-oriented intelligent agent that navigates a maze by reasoning, planning, and executing actions. It uses Java with a custom Simplified First Order Logic (SFOL) framework for defining and processing knowledge bases.
